@@ -10,7 +10,7 @@ and override marks.
 > College Palakkad (APJ Abdul Kalam Technological University), 2025-26.
 
 ## Features
-- Teacher signup/login, class and exam management
+- Teacher signup/login (hashed passwords), class and exam management
 - Automatic question-paper parsing into structured JSON (Gemini)
 - Handwritten answer grading against the marking scheme with a strict rubric
 - OR-group / pick-count logic for correct total calculation
@@ -19,41 +19,56 @@ and override marks.
 ## Tech Stack
 Python, Flask, MySQL, Google Gemini API, HTML/CSS, Bootstrap, JavaScript, Jinja2
 
-## How It Works
-1. **Exam creation:** upload QP + answer key → Gemini returns exam structure → stored in `exam_questions`.
-2. **Evaluation:** upload student booklet → Gemini grades per question → `calculate_total` applies OR/pick-count rules.
-3. **Review:** teacher checks AI marks and overrides if needed.
-
 ## Screenshots
 ![Dashboard](docs/dashboard.png)
 ![Evaluation](docs/evaluation.png)
 
 ## Setup
+
+**Prerequisites:** Python 3.9+, MySQL Server (or XAMPP), a Gemini API key
+from https://aistudio.google.com/app/apikey
+
 1. Clone the repo
-
-git clone https://github.com/<Vishnu-I-T>/GradeFlow.git
-cd GradeFlow
-
+```bash
+   git clone https://github.com/Vishnu-I-T/GradeFlow---Automated-Answer-Script-Evaluation-Platform.git
+   cd GradeFlow---Automated-Answer-Script-Evaluation-Platform
+```
 2. Create a virtual environment and install dependencies
+```bash
+   python -m venv venv
+   venv\Scripts\activate          # Windows
+   source venv/bin/activate       # Linux/Mac
+   pip install -r requirements.txt
+```
+3. Create the database
+```bash
+   mysql -u root -p < schema.sql
+```
+4. Copy `.env.example` to `.env` and fill in your values
+```bash
+   cp .env.example .env
+```
+5. Run the app
+```bash
+   python app.py
+```
+   Open http://127.0.0.1:5000
 
-python -m venv venv
-venv\Scripts\activate # Windows
-source venv/bin/activate # Linux/Mac
-pip install -r requirements.txt
-
-3. Create the database: run `schema.sql` in MySQL.
-4. Copy `.env.example` to `.env` and fill in your Gemini API key
-   (get one at https://aistudio.google.com/app/apikey) and DB details.
-5. Run `python app.py` and open http://127.0.0.1:5000
+## Environment Variables
+| Variable | Description |
+|---|---|
+| `GEMINI_API_KEY` | Your Google Gemini API key |
+| `FLASK_SECRET_KEY` | Long random string for session signing |
+| `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | MySQL connection details |
+| `FLASK_DEBUG` | Set to `1` for local development only |
 
 ## Known Limitations
-- Passwords are stored in plain text (hashing planned)
-- No per-teacher authorization checks on some routes
-- Free-tier Gemini rate limits; weaker on highly descriptive answers
-- Requires internet access for the AI API
+- Depends on Gemini free-tier rate limits and needs internet access
+- AI grading is weaker on highly descriptive, open-ended answers; manual review is recommended
+- No HTTPS or rate limiting (planned for production deployment)
 
 ## Team
-- Vishnu I T: AI & API integration
+- Vishnu I T: AI and API integration
 - Adithya Manoj: Backend
 - Raseena R: Database
 - Sharfeena S: Frontend
@@ -61,4 +76,4 @@ pip install -r requirements.txt
 Guide: Prof. Sasinas Alias Haritha
 
 ## License
-MIT (or your choice)
+MIT. See [LICENSE](LICENSE).
