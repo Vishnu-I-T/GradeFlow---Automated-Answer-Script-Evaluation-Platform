@@ -11,6 +11,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("FLASK_SECRET_KEY is not set. Copy .env.example to .env and fill it in.")
 
 #Configuring upload folder
 UPLOAD_FOLDER = 'static/uploads'
@@ -684,4 +686,4 @@ def edit_exam():
     return redirect(url_for('class_view', class_id=class_id))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG") == "1")
