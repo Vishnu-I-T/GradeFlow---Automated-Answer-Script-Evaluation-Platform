@@ -18,7 +18,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 #Setting up the api key for genai
-GENAI_API_KEY = "AIzaSyD_2IkKVMkkGa1VqBqbzHGt4jTjENteZSY"
+
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 #Database connection function
