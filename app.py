@@ -7,6 +7,9 @@ import json
 import re
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -68,6 +71,37 @@ def extract_json(text):
     except:
         return None
 
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return wrapper
+
+# Each helper returns the row only if it belongs to the logged-in teacher.
+def get_owned_class(cursor, class_id):
+    cursor.execute("SELECT * FROM classes WHERE id = %s AND teacher_id = %s",
+                   (class_id, session['user_id']))
+    return cursor.fetchone()
+
+def get_owned_exam(cursor, exam_id):
+    cursor.execute("""SELECT e.* FROM exams e
+                      JOIN classes c ON e.class_id = c.id
+                      WHERE e.id = %s AND c.teacher_id = %s""",
+                   (exam_id, session['user_id']))
+    return cursor.fetchone()
+
+def get_owned_student(cursor, student_id):
+    cursor.execute("""SELECT s.* FROM students s
+                      JOIN exams e ON s.exam_id = e.id
+                      JOIN classes c ON e.class_id = c.id
+                      WHERE s.id = %s AND c.teacher_id = %s""",
+                   (student_id, session['user_id']))
+    return cursor.fetchone()
+
+
 #Core routes below
 
 #For index page
@@ -77,79 +111,6 @@ def index():
 
 #to reset the database and undo changes
 @app.route('/reset_db')
-def reset_db():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        #Drop old tables
-        cursor.execute("DROP TABLE IF EXISTS student_answers")
-        cursor.execute("DROP TABLE IF EXISTS students")
-        cursor.execute("DROP TABLE IF EXISTS exam_questions")
-        cursor.execute("DROP TABLE IF EXISTS exams")
-        cursor.execute("DROP TABLE IF EXISTS classes")
-        
-        #Recreate tables to the base structure
-        cursor.execute("""
-            CREATE TABLE classes (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                teacher_id INT,
-                name VARCHAR(255),
-                subject VARCHAR(255),
-                semester VARCHAR(50),
-                year VARCHAR(10)
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE exams (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                class_id INT,
-                name VARCHAR(255),
-                total_marks INT,
-                qp_path VARCHAR(255),
-                scheme_path VARCHAR(255),
-                sheet_link VARCHAR(255)
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE TABLE exam_questions (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                exam_id INT,
-                q_label VARCHAR(50),
-                max_marks FLOAT,
-                or_group_id INT NULL,
-                sub_unit_id VARCHAR(50) NULL,
-                pick_count INT DEFAULT 1
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE TABLE students (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                exam_id INT,
-                name VARCHAR(255),
-                roll_no VARCHAR(50),
-                answer_pdf_path VARCHAR(255),
-                total_obtained FLOAT DEFAULT 0
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE student_answers (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                student_id INT,
-                question_id INT,
-                ocr_text TEXT,
-                ai_score FLOAT,
-                final_score FLOAT
-            )
-        """)
-        
-        conn.commit()
-        conn.close()
-        return "<h1>Database Reset & Upgraded. <a href='/dashboard'>Go to Dashboard</a></h1>"
-    except Exception as e:
-        return f"<h1>Reset Failed: {e}</h1>"
 
 #For signup
 @app.route('/signup', methods=['GET', 'POST'])
@@ -157,29 +118,34 @@ def signup():
     if request.method == 'POST':
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO teachers (name, email, password) VALUES (%s, %s, %s)", 
-                       (request.form['name'], request.form['email'], request.form['password']))
-        conn.commit()
+        try:
+            cursor.execute(
+                "INSERT INTO teachers (name, email, password) VALUES (%s, %s, %s)",
+                (request.form['name'], request.form['email'],
+                 generate_password_hash(request.form['password'])))
+            conn.commit()
+        except mysql.connector.IntegrityError:
+            conn.close()
+            return render_template('signup.html', error="Email already registered")
         conn.close()
         return redirect(url_for('login'))
     return render_template('signup.html')
 
-#for login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM teachers WHERE email = %s AND password = %s", 
-                       (request.form['email'], request.form['password']))
+        cursor.execute("SELECT * FROM teachers WHERE email = %s",
+                       (request.form['email'],))
         user = cursor.fetchone()
         conn.close()
-        if user:
+        if user and check_password_hash(user['password'], request.form['password']):
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             return redirect(url_for('dashboard'))
+        return render_template('login.html', error="Invalid email or password")
     return render_template('login.html')
-
 #for logout
 @app.route('/logout')
 def logout():
@@ -188,6 +154,7 @@ def logout():
 
 #for dashboard
 @app.route('/dashboard')
+@login_required
 def dashboard():
     if 'user_id' not in session: return redirect(url_for('login'))
     conn = get_db_connection()
@@ -199,6 +166,7 @@ def dashboard():
 
 #profile editing route
 @app.route('/edit_profile', methods=['POST'])
+@login_required
 def edit_profile():
     if 'user_id' not in session: return redirect(url_for('login'))
     new_name = request.form['name']
@@ -212,6 +180,7 @@ def edit_profile():
 
 #class management routes
 @app.route('/add_class', methods=['POST'])
+@login_required
 def add_class():
     if 'user_id' not in session: return redirect(url_for('login'))
     conn = get_db_connection()
