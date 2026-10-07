@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/dashboard" class="text-decoration-none text-secondary mb-2 d-inline-block">
+        &larr; Back to Dashboard
+    </a>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-0">{{ class_info.name }}</h2>
+            <p class="text-muted mb-0">{{ class_info.subject }} | {{ class_info.semester }}</p>
+        </div>
+        <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#addExamModal">
+            + New Exam
+        </button>
+    </div>
+</div>
+
+<hr class="mb-4">
+
+<div class="row">
+    {% if exams %}
+        {% for exam in exams %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title fw-bold text-primary mb-0">
+                            <a href="/exam/{{exam.id}}" class="text-decoration-none">{{ exam.name }}</a>
+                        </h5>
+                        
+                        <div>
+                            <a href="#" 
+                               class="text-secondary p-1 me-1" 
+                               title="Edit Exam"
+                               data-bs-toggle="modal" 
+                               data-bs-target="#editExamModal"
+                               data-id="{{ exam.id }}"
+                               data-name="{{ exam.name }}"
+                               data-marks="{{ exam.total_marks }}"
+                               data-link="{{ exam.sheet_link }}">
+                                ✏️
+                            </a>
+
+                            <a href="/delete_exam/{{exam.id}}" 
+                               class="text-danger p-1" 
+                               onclick="return confirm('Delete this exam?');"
+                               title="Delete Exam">
+                                🗑️
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="badge bg-light text-dark border mb-3">Max Marks: {{ exam.total_marks }}</div>
+                    
+                    <div class="d-grid">
+                        <a href="/exam/{{exam.id}}" class="btn btn-outline-primary btn-sm">
+                            Open Exam &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">No exams created yet.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="addExamModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form action="/add_exam" method="POST" enctype="multipart/form-data" class="modal-content">
+            <input type="hidden" name="class_id" value="{{ class_info.id }}">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Create New Exam</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Exam Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="Internal 1" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Total Marks</label>
+                        <input type="number" name="marks" class="form-control" placeholder="50" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">1. Question Paper (PDF)</label>
+                    <input type="file" name="qp_file" class="form-control" accept=".pdf" required>
+                    <div class="form-text">AI will extract questions automatically.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">2. Answer Key (PDF)</label>
+                    <input type="file" name="scheme_file" class="form-control" accept=".pdf" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mark Sheet Link (Optional)</label>
+                    <input type="url" name="sheet_link" class="form-control" placeholder="Google Sheets URL">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning" onclick="showLoading('Uploading Question Paper & Answer Key... Analysing...')">Upload & Analyze</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editExamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/edit_exam" method="POST" class="modal-content">
+            <input type="hidden" name="exam_id" id="edit_exam_id">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Edit Exam Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Exam Name</label>
+                    <input type="text" name="name" id="edit_exam_name" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Total Marks</label>
+                    <input type="number" name="total_marks" id="edit_total_marks" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sheet Link</label>
+                    <input type="url" name="sheet_link" id="edit_sheet_link" class="form-control" placeholder="Optional">
+                </div>
+                <div class="alert alert-warning small">
+                    Note: To change the Question Paper or Answer Key, please delete this exam and create a new one.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    var editExamModal = document.getElementById('editExamModal');
+    editExamModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var id = button.getAttribute('data-id');
+        var name = button.getAttribute('data-name');
+        var marks = button.getAttribute('data-marks');
+        var link = button.getAttribute('data-link');
+        document.getElementById('edit_exam_id').value = id;
+        document.getElementById('edit_exam_name').value = name;
+        document.getElementById('edit_total_marks').value = marks;
+        document.getElementById('edit_sheet_link').value = link;
+    });
+</script>
+{% endblock %}

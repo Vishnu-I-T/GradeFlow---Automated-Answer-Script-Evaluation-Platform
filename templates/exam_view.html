@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/class/{{ exam.class_id }}" class="text-decoration-none text-secondary mb-2 d-inline-block">
+        &larr; Back to Class
+    </a>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-0">{{ exam.name }} - Students</h2>
+            <p class="text-muted mb-0">Total Marks: {{ exam.total_marks }}</p>
+        </div>
+        <div>
+            {% if exam.sheet_link %}
+            <a href="{{ exam.sheet_link }}" target="_blank" class="btn btn-warning text-dark fw-bold shadow-sm me-2">
+                Open Google Sheet
+            </a>
+            {% endif %}
+
+            <a href="{{ url_for('static', filename='uploads/' + exam.qp_path) }}" target="_blank" class="btn btn-outline-primary fw-bold me-2">
+                📄 Question Paper
+            </a>
+
+            <a href="{{ url_for('static', filename='uploads/' + exam.scheme_path) }}" target="_blank" class="btn btn-outline-info fw-bold me-2">
+                🔑 Answer Key
+            </a>
+
+            <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                + Add Student
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Roll No</th>
+                    <th>Name</th>
+                    <th>Total Marks</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if students %}
+                    {% for student in students %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-secondary">{{ student.roll_no }}</td>
+                        <td class="fw-bold">{{ student.name }}</td>
+                        <td>
+                            <span class="badge bg-primary rounded-pill px-3" style="font-size: 0.9rem;">
+                                {{ student.total_obtained }} / {{ exam.total_marks }}
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="/evaluate/{{ student.id }}" class="btn btn-sm btn-primary fw-bold px-3 me-2">
+                                Evaluate
+                            </a>
+
+                            <button class="btn btn-sm btn-outline-secondary me-1" 
+                                    title="Edit Details"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editStudentModal"
+                                    data-id="{{ student.id }}"
+                                    data-name="{{ student.name }}"
+                                    data-roll="{{ student.roll_no }}">
+                                ✏️
+                            </button>
+
+                            <a href="/delete_student/{{ student.id }}" 
+                               class="btn btn-sm btn-outline-danger" 
+                               title="Delete Student"
+                               onclick="return confirm('⚠️ Warning: This will permanently delete {{ student.name }} and all their graded answers.\n\nAre you sure?');">
+                                🗑️
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            No students added yet. Click "+ Add Student" to begin.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/add_student" method="POST" enctype="multipart/form-data" class="modal-content">
+            <input type="hidden" name="exam_id" value="{{ exam.id }}">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Add Student Answer Sheet</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Student Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Roll No</label>
+                        <input type="text" name="roll" class="form-control" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Upload Answer PDF</label>
+                    <input type="file" name="answer_pdf" class="form-control" accept=".pdf" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success" onclick="showLoading('Uploading Answer Sheet... Grading in progress...')">Upload & Grade</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="editStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/edit_student" method="POST" class="modal-content">
+            <input type="hidden" name="student_id" id="edit_student_id">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Edit Student Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" name="name" id="edit_name" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Roll No</label>
+                    <input type="text" name="roll_no" id="edit_roll" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    var editModal = document.getElementById('editStudentModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var id = button.getAttribute('data-id');
+        var name = button.getAttribute('data-name');
+        var roll = button.getAttribute('data-roll');
+        
+        document.getElementById('edit_student_id').value = id;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_roll').value = roll;
+    });
+</script>
+{% endblock %}

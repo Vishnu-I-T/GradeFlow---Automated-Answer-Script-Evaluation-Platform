@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center py-5" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); color: white; padding-bottom: 6rem !important; margin-bottom: -3rem;">
+    <div class="container py-5">
+        <h1 class="display-4 fw-bold mb-3">Automated Answer Script Evaluation</h1>
+        <p class="lead mb-4" style="max-width: 700px; margin: 0 auto; opacity: 0.9;">
+            Revolutionize your grading with AI. Leverage advanced OCR and machine learning to grade handwritten exams in seconds, not hours. Accurate, consistent, and efficient.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/signup" class="btn btn-light btn-lg fw-bold px-4 shadow-sm text-primary">Get Started Now</a>
+            <a href="/login" class="btn btn-outline-light btn-lg fw-bold px-4">Login</a>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5" style="position: relative; z-index: 10;">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center p-4" style="background: #fff; border-radius: 12px;">
+                <div class="mb-3 text-primary" style="font-size: 3rem;">📝</div>
+                <h4 class="fw-bold">AI-Powered Grading</h4>
+                <p class="text-muted">Our advanced AI reads handwritten answers and evaluates them against your answer key with remarkable accuracy.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center p-4" style="background: #fff; border-radius: 12px;">
+                <div class="mb-3 text-success" style="font-size: 3rem;">⚡</div>
+                <h4 class="fw-bold">Lightning Fast Results</h4>
+                <p class="text-muted">Grade hundreds of scripts in minutes. Free up valuable time to focus on teaching and student feedback.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm text-center p-4" style="background: #fff; border-radius: 12px;">
+                <div class="mb-3 text-info" style="font-size: 3rem;">🛡️</div>
+                <h4 class="fw-bold">Secure & Organized</h4>
+                <p class="text-muted">Keep all your student data, question papers, and answer keys securely organized in one cloud-based dashboard.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5 py-5">
+    <h2 class="text-center fw-bold mb-5">How GradeFlow Works</h2>
+    <div class="row text-center justify-content-center align-items-center g-4">
+        <div class="col-md-3">
+            <div class="p-3 bg-white shadow-sm rounded">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 70px; height: 70px; font-size: 1.8rem; font-weight: bold;">1</div>
+                <h5 class="fw-bold">Upload Exam Data</h5>
+                <p class="text-muted small mb-0">Teacher uploads the Question Paper (PDF), Answer Key (PDF), and Student Answer Scripts.</p>
+            </div>
+        </div>
+        <div class="col-md-1 d-none d-md-block text-muted" style="font-size: 2.5rem;">→</div>
+        
+        <div class="col-md-3">
+            <div class="p-3 bg-white shadow-sm rounded">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 70px; height: 70px; font-size: 1.8rem; font-weight: bold;">2</div>
+                <h5 class="fw-bold">AI Processing & Grading</h5>
+                <p class="text-muted small mb-0">The system performs OCR to read handwritten text and uses AI to evaluate answers based on the key.</p>
+            </div>
+        </div>
+        <div class="col-md-1 d-none d-md-block text-muted" style="font-size: 2.5rem;">→</div>
+
+        <div class="col-md-3">
+            <div class="p-3 bg-white shadow-sm rounded">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 70px; height: 70px; font-size: 1.8rem; font-weight: bold;">3</div>
+                <h5 class="fw-bold">Review & Finalize</h5>
+                <p class="text-muted small mb-0">Teacher reviews the AI's suggested marks, makes any necessary adjustments, and saves the final grades.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="text-center py-4 mt-auto" style="background: #212529; color: #adb5bd;">
+    <div class="container">
+        <p class="mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.9rem;">Developed with <span class="text-danger">❤</span> by</p>
+        <h5 class="fw-bold text-white mb-3">Vishnu I T, Adithya Manoj, Sharfeena S, Raseena R</h5>
+        <div style="border-top: 1px solid #343a40; width: 60%; margin: 0 auto 1rem;"></div>
+        <p class="small mb-0">&copy; 2024 GradeFlow. All rights reserved.</p>
+    </div>
+</footer>
+{% endblock %}
